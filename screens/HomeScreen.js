@@ -5,35 +5,35 @@ import {
   Text, 
   StyleSheet, 
   FlatList, 
-  ActivityIndicator, 
-  TouchableOpacity,
+  ActivityIndicator,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
   TextInput,
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Card from '../components/Card';
+import EnterpriseCard from '../components/EnterpriseCard';
 import { COLORS, SIZES } from '../styles/theme';
 
-// Données fictives pour simuler une API
-import { getCompanies, getCategories } from '../services/api';
+// Import des données du modèle
+import { getEnterprises, getDomains } from '../services/api';
 
 const HomeScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [companies, setCompanies] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [enterprises, setEnterprises] = useState([]);
+  const [businessDomains, setBusinessDomains] = useState([]);
+  const [selectedDomain, setSelectedDomain] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulation d'appel API
-        const companiesData = await getCompanies();
-        const categoriesData = await getCategories();
+        // Appels API
+        const enterprisesData = await getEnterprises();
+        const domainsData = await getDomains();
         
-        setCompanies(companiesData);
-        setCategories(categoriesData);
+        setEnterprises(enterprisesData);
+        setBusinessDomains(domainsData);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -44,55 +44,60 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
-  const handleCategoryPress = (categoryId) => {
-    if (selectedCategory === categoryId) {
-      setSelectedCategory(null);
+  const handleDomainPress = (domainId) => {
+    if (selectedDomain === domainId) {
+      setSelectedDomain(null);
     } else {
-      setSelectedCategory(categoryId);
+      setSelectedDomain(domainId);
     }
   };
 
-  const filteredCompanies = selectedCategory
-    ? companies.filter(company => company.categoryId === selectedCategory)
-    : companies;
+  const filteredEnterprises = selectedDomain
+    ? enterprises.filter(enterprise => 
+        enterprise.businessDomains.some(domain => domain.id === selectedDomain)
+      )
+    : enterprises;
 
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.titleContainer}>
-        <Text style={styles.greeting}>Bonjour,</Text>
+        <Text style={styles.greeting}>Welcomes,</Text>
         <Text style={styles.title}>Business Book</Text>
       </View>
-      <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('Search')}>
+      <TouchableOpacity 
+        style={styles.searchButton} 
+        onPress={() => navigation.navigate('Search')}
+      >
         <Ionicons name="search" size={20} color={COLORS.text} />
         <Text style={styles.searchText}>Rechercher une entreprise...</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const renderCategories = () => (
-    <View style={styles.categoriesContainer}>
-      <Text style={styles.sectionTitle}>Catégories</Text>
+  const renderDomains = () => (
+    <View style={styles.domainsContainer}>
+      <Text style={styles.sectionTitle}>Domaines d'activité</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesList}
+        contentContainerStyle={styles.domainsList}
       >
-        {categories.map(category => (
+        {businessDomains.map(domain => (
           <TouchableOpacity
-            key={category.id}
+            key={domain.id}
             style={[
-              styles.categoryItem,
-              selectedCategory === category.id && styles.selectedCategoryItem
+              styles.domainItem,
+              selectedDomain === domain.id && styles.selectedDomainItem
             ]}
-            onPress={() => handleCategoryPress(category.id)}
+            onPress={() => handleDomainPress(domain.id)}
           >
             <Text 
               style={[
-                styles.categoryName,
-                selectedCategory === category.id && styles.selectedCategoryName
+                styles.domainName,
+                selectedDomain === domain.id && styles.selectedDomainName
               ]}
             >
-              {category.name}
+              {domain.domainName}
             </Text>
           </TouchableOpacity>
         ))}
@@ -111,21 +116,21 @@ const HomeScreen = ({ navigation }) => {
 
     return (
       <FlatList
-        data={filteredCompanies}
-        keyExtractor={(item) => item.id.toString()}
+        data={filteredEnterprises}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Card 
-            company={item}
-            onPress={() => navigation.navigate('Details', { id: item.id, name: item.name })}
+          <EnterpriseCard 
+            enterprise={item}
+            onPress={() => navigation.navigate('Details', { id: item.id, name: item.longName })}
           />
         )}
         ListHeaderComponent={
           <>
             {renderHeader()}
-            {renderCategories()}
+            {renderDomains()}
             <Text style={styles.sectionTitle}>
-              {selectedCategory 
-                ? `${filteredCompanies.length} entreprise(s) trouvée(s)` 
+              {selectedDomain 
+                ? `${filteredEnterprises.length} entreprise(s) trouvée(s)` 
                 : 'Entreprises populaires'
               }
             </Text>
@@ -144,6 +149,7 @@ const HomeScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -180,7 +186,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: SIZES.body,
   },
-  categoriesContainer: {
+  domainsContainer: {  // Correction ici (était categoriesContainer)
     paddingHorizontal: SIZES.medium,
     marginBottom: SIZES.medium,
   },
@@ -191,24 +197,24 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.small,
     paddingHorizontal: SIZES.medium,
   },
-  categoriesList: {
+  domainsList: {  // Correction ici (était categoriesList)
     paddingVertical: SIZES.small,
   },
-  categoryItem: {
+  domainItem: {  // Correction ici (était categoryItem)
     paddingHorizontal: SIZES.medium,
     paddingVertical: SIZES.small,
     marginRight: SIZES.small,
     backgroundColor: COLORS.card,
     borderRadius: SIZES.borderRadius,
   },
-  selectedCategoryItem: {
+  selectedDomainItem: {  // Correction ici (était selectedCategoryItem)
     backgroundColor: COLORS.primary,
   },
-  categoryName: {
+  domainName: {  // Correction ici (était categoryName)
     fontSize: SIZES.body,
     color: COLORS.text,
   },
-  selectedCategoryName: {
+  selectedDomainName: {  // Correction ici (était selectedCategoryName)
     color: COLORS.card,
   },
   listContent: {

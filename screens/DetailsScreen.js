@@ -15,54 +15,52 @@ import { Ionicons } from '@expo/vector-icons';
 import Button from '../components/Button';
 import { COLORS, SIZES, SHADOWS } from '../styles/theme';
 
-// Import des données mock
-import { getCompanyById } from '../services/api';
+// Import des données du modèle
+import { getEnterpriseById } from '../services/api';
 
 const DetailsScreen = ({ route, navigation }) => {
   const { id } = route.params;
-  const [company, setCompany] = useState(null);
+  const [enterprise, setEnterprise] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    const fetchCompanyDetails = async () => {
+    const fetchEnterpriseDetails = async () => {
       try {
-        // Simulation d'un appel API
-        const data = await getCompanyById(id);
-        setCompany(data);
+        const data = await getEnterpriseById(id);
+        setEnterprise(data);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching company details:', error);
+        console.error('Error fetching enterprise details:', error);
         setIsLoading(false);
       }
     };
 
-    fetchCompanyDetails();
+    fetchEnterpriseDetails();
   }, [id]);
 
   const handleFavoriteToggle = () => {
     setIsFavorite(!isFavorite);
-    // Logique pour sauvegarder dans les favoris (à implémenter avec AsyncStorage)
   };
 
   const handleCall = () => {
-    if (company?.phone) {
-      Linking.openURL(`tel:${company.phone}`);
+    if (enterprise?.orgContact) {
+      Linking.openURL(`tel:${enterprise.orgContact}`);
     }
   };
 
   const handleEmail = () => {
-    if (company?.email) {
-      Linking.openURL(`mailto:${company.email}`);
+    if (enterprise?.email) {
+      Linking.openURL(`mailto:${enterprise.email}`);
     }
   };
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Découvrez ${company?.name} sur Business Book!`,
-        url: `https://businessbook.com/company/${company?.id}`,
-        title: company?.name,
+        message: `Découvrez ${enterprise?.longName} sur Business Book!`,
+        url: `https://businessbook.com/enterprise/${enterprise?.id}`,
+        title: enterprise?.longName,
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -77,7 +75,7 @@ const DetailsScreen = ({ route, navigation }) => {
     );
   }
 
-  if (!company) {
+  if (!enterprise) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>
@@ -96,13 +94,13 @@ const DetailsScreen = ({ route, navigation }) => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Image 
-          source={{ uri: company.coverImage || 'https://via.placeholder.com/500x200' }} 
+          source={{ uri: enterprise.logoUrl || 'https://via.placeholder.com/500x200' }} 
           style={styles.coverImage}
           resizeMode="cover"
         />
         <View style={styles.logoContainer}>
           <Image 
-            source={{ uri: company.logo || 'https://via.placeholder.com/100' }} 
+            source={{ uri: enterprise.logoUrl || 'https://via.placeholder.com/100' }} 
             style={styles.logo}
             resizeMode="cover"
           />
@@ -120,25 +118,23 @@ const DetailsScreen = ({ route, navigation }) => {
       </View>
 
       <View style={styles.contentContainer}>
-        <Text style={styles.name}>{company.name}</Text>
-        <Text style={styles.category}>{company.category}</Text>
+        <Text style={styles.name}>{enterprise.longName}</Text>
+        <Text style={styles.shortName}>{enterprise.shortName}</Text>
 
-        <View style={styles.ratingContainer}>
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Text 
-                key={star} 
-                style={[
-                  styles.star, 
-                  star <= Math.floor(company.rating) ? styles.filledStar : {}
-                ]}
-              >
-                ★
-              </Text>
-            ))}
-          </View>
-          <Text style={styles.ratingText}>{company.rating}</Text>
-          <Text style={styles.reviewCount}>({company.reviewCount} avis)</Text>
+        <View style={styles.domainContainer}>
+          {enterprise.businessDomains.map((domain, index) => (
+            <View key={index} style={styles.domainTag}>
+              <Text style={styles.domainText}>{domain.domainName}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.statusContainer}>
+          <View style={[
+            styles.statusDot, 
+            { backgroundColor: enterprise.isActive ? COLORS.success : COLORS.error }
+          ]} />
+          <Text style={styles.statusText}>{enterprise.status}</Text>
         </View>
 
         <View style={styles.actionButtons}>
@@ -158,7 +154,7 @@ const DetailsScreen = ({ route, navigation }) => {
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>À propos</Text>
-          <Text style={styles.description}>{company.description}</Text>
+          <Text style={styles.description}>{enterprise.description}</Text>
         </View>
 
         <View style={styles.infoSection}>
@@ -166,75 +162,65 @@ const DetailsScreen = ({ route, navigation }) => {
           
           <View style={styles.infoItem}>
             <Ionicons name="location-outline" size={20} color={COLORS.textSecondary} />
-            <Text style={styles.infoText}>{company.address}</Text>
+            <Text style={styles.infoText}>{enterprise.orgContact}</Text>
           </View>
           
           <View style={styles.infoItem}>
             <Ionicons name="call-outline" size={20} color={COLORS.textSecondary} />
-            <Text style={styles.infoText}>{company.phone}</Text>
+            <Text style={styles.infoText}>{enterprise.orgContact}</Text>
           </View>
           
           <View style={styles.infoItem}>
             <Ionicons name="mail-outline" size={20} color={COLORS.textSecondary} />
-            <Text style={styles.infoText}>{company.email}</Text>
+            <Text style={styles.infoText}>{enterprise.email}</Text>
           </View>
           
           <View style={styles.infoItem}>
             <Ionicons name="globe-outline" size={20} color={COLORS.textSecondary} />
-            <Text style={styles.infoText}>{company.website}</Text>
+            <Text style={styles.infoText}>{enterprise.websiteUrl}</Text>
           </View>
-
+          
           <View style={styles.infoItem}>
-            <Ionicons name="time-outline" size={20} color={COLORS.textSecondary} />
-            <Text style={styles.infoText}>{company.hours}</Text>
+            <Ionicons name="business-outline" size={20} color={COLORS.textSecondary} />
+            <Text style={styles.infoText}>N° Registre: {enterprise.businessRegistrationNumber}</Text>
+          </View>
+          
+          <View style={styles.infoItem}>
+            <Ionicons name="calendar-outline" size={20} color={COLORS.textSecondary} />
+            <Text style={styles.infoText}>
+              Fondée en {enterprise.yearFounded.getFullYear()} 
+              (Enregistrée le {enterprise.registrationDate.toLocaleDateString()})
+            </Text>
+          </View>
+          
+          <View style={styles.infoItem}>
+            <Ionicons name="people-outline" size={20} color={COLORS.textSecondary} />
+            <Text style={styles.infoText}>{enterprise.numberOfEmployees} employés</Text>
           </View>
         </View>
 
-        <View style={styles.infoSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Avis</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Voir tout</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {company.reviews && company.reviews.length > 0 ? (
-            company.reviews.slice(0, 3).map((review, index) => (
-              <View key={index} style={styles.reviewItem}>
-                <View style={styles.reviewHeader}>
-                  <Text style={styles.reviewerName}>{review.name}</Text>
-                  <Text style={styles.reviewDate}>{review.date}</Text>
-                </View>
-                <View style={styles.reviewRating}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Text 
-                      key={star} 
-                      style={[
-                        styles.reviewStar, 
-                        star <= Math.floor(review.rating) ? styles.filledStar : {}
-                      ]}
-                    >
-                      ★
-                    </Text>
-                  ))}
-                </View>
-                <Text style={styles.reviewText}>{review.comment}</Text>
+        <View style={styles.keywordsSection}>
+          <Text style={styles.sectionTitle}>Mots-clés</Text>
+          <View style={styles.keywordsContainer}>
+            {enterprise.keywords.map((keyword, index) => (
+              <View key={index} style={styles.keywordTag}>
+                <Text style={styles.keywordText}>{keyword}</Text>
               </View>
-            ))
-          ) : (
-            <Text style={styles.noReviewsText}>Aucun avis pour le moment</Text>
-          )}
+            ))}
+          </View>
         </View>
 
         <Button 
-          title="Écrire un avis" 
+          title="Contacter cette entreprise" 
           type="primary" 
-          style={styles.writeReviewButton} 
+          style={styles.contactButton} 
+          onPress={handleEmail}
         />
       </View>
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

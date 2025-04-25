@@ -12,82 +12,90 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Card from '../components/Card';
+import EnterpriseCard from '../components/EnterpriseCard';
 import { COLORS, SIZES } from '../styles/theme';
 
-// Import des données mock
-import { getCompanies, getCategories } from '../services/api';
+// Import des fonctions API
+import { searchEnterprises, getDomains } from '../services/api';
 
 const SearchScreen = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [companies, setCompanies] = useState([]);
-  const [filteredCompanies, setFilteredCompanies] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [enterprises, setEnterprises] = useState([]);
+  const [businessDomains, setBusinessDomains] = useState([]);
+  const [selectedDomains, setSelectedDomains] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  // Simulation d'un objet Visitor selon le diagramme de classe
+  const visitor = {
+    id: 'visitor-1',
+    search: async (query, domainIds) => {
       try {
-        // Simulation d'un appel API
-        const companiesData = await getCompanies();
-        const categoriesData = await getCategories();
-        
-        setCompanies(companiesData);
-        setFilteredCompanies(companiesData);
-        setCategories(categoriesData);
+        return await searchEnterprises(query, domainIds);
+      } catch (error) {
+        console.error('Error searching enterprises:', error);
+        return [];
+      }
+    },
+    subscribe: () => {
+      // Implémentation d'abonnement
+      console.log('User subscribed');
+    },
+    contactEnterprise: (contactInfo) => {
+      // Implémentation pour contacter l'entreprise
+      console.log('Contacting enterprise with:', contactInfo);
+    }
+  };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const domainsData = await getDomains();
+        setBusinessDomains(domainsData);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching domains:', error);
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
-    filterCompanies();
-  }, [searchTerm, selectedCategories]);
+    const performSearch = async () => {
+      if (searchTerm.trim() === '' && selectedDomains.length === 0) {
+        setEnterprises([]);
+        return;
+      }
 
-  const filterCompanies = () => {
-    let filtered = companies;
-    
-    // Filtrer par nom ou description
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        company => 
-          company.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-          company.description.toLowerCase().includes(lowerCaseSearchTerm) ||
-          company.category.toLowerCase().includes(lowerCaseSearchTerm)
-      );
-    }
-    
-    // Filtrer par catégories sélectionnées
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(company => 
-        selectedCategories.includes(company.categoryId)
-      );
-    }
-    
-    setFilteredCompanies(filtered);
-  };
+      setIsLoading(true);
+      const results = await visitor.search(searchTerm, selectedDomains);
+      setEnterprises(results);
+      setIsLoading(false);
+    };
 
-  const handleCategoryToggle = (categoryId) => {
-    const updatedCategories = [...selectedCategories];
+    // Utiliser un délai pour éviter trop d'appels à l'API
+    const debounceTimer = setTimeout(() => {
+      performSearch();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, selectedDomains]);
+
+  const handleDomainToggle = (domainId) => {
+    const updatedDomains = [...selectedDomains];
     
-    if (updatedCategories.includes(categoryId)) {
-      // Retirer la catégorie
-      const index = updatedCategories.indexOf(categoryId);
-      updatedCategories.splice(index, 1);
+    if (updatedDomains.includes(domainId)) {
+      // Retirer le domaine
+      const index = updatedDomains.indexOf(domainId);
+      updatedDomains.splice(index, 1);
     } else {
-      // Ajouter la catégorie
-      updatedCategories.push(categoryId);
+      // Ajouter le domaine
+      updatedDomains.push(domainId);
     }
     
-    setSelectedCategories(updatedCategories);
+    setSelectedDomains(updatedDomains);
   };
 
   const renderFilters = () => {
@@ -95,29 +103,71 @@ const SearchScreen = ({ navigation }) => {
     
     return (
       <View style={styles.filtersContainer}>
-        <Text style={styles.filterTitle}>Filtrer par catégorie</Text>
-        <View style={styles.categoriesContainer}>
-          {categories.map(category => (
+        <Text style={styles.filterTitle}>Filtrer par domaine</Text>
+        <View style={styles.domainsContainer}>
+          {businessDomains.map(domain => (
             <TouchableOpacity
-              key={category.id}
+              key={domain.id}
               style={[
-                styles.categoryItem,
-                selectedCategories.includes(category.id) && styles.selectedCategoryItem
+                styles.domainItem,
+                selectedDomains.includes(domain.id) && styles.selectedDomainItem
               ]}
-              onPress={() => handleCategoryToggle(category.id)}
+              onPress={() => handleDomainToggle(domain.id)}
             >
               <Text 
                 style={[
-                  styles.categoryName,
-                  selectedCategories.includes(category.id) && styles.selectedCategoryName
+                  styles.domainName,
+                  selectedDomains.includes(domain.id) && styles.selectedDomainName
                 ]}
               >
-                {category.name}
+                {domain.domainName}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
+    );
+  };
+
+  const renderContent = () => {
+    if (isLoading && (searchTerm.trim() !== '' || selectedDomains.length > 0)) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      );
+    }
+
+    if (enterprises.length === 0 && (searchTerm.trim() !== '' || selectedDomains.length > 0)) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Aucune entreprise ne correspond à votre recherche</Text>
+        </View>
+      );
+    }
+
+    if (enterprises.length === 0) {
+      return (
+        <View style={styles.initialSearchContainer}>
+          <Ionicons name="search" size={80} color={COLORS.textSecondary} style={styles.searchIcon} />
+          <Text style={styles.searchHint}>Recherchez une entreprise par nom, description ou mot-clé</Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={enterprises}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <EnterpriseCard 
+            enterprise={item}
+            onPress={() => navigation.navigate('Details', { id: item.id, name: item.longName })}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     );
   };
 
@@ -127,7 +177,7 @@ const SearchScreen = ({ navigation }) => {
       
       <View style={styles.header}>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.inputSearchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher une entreprise, un service..."
@@ -157,37 +207,15 @@ const SearchScreen = ({ navigation }) => {
       
       {renderFilters()}
       
-      {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+      {enterprises.length > 0 && (
+        <View style={styles.resultsHeader}>
+          <Text style={styles.resultsCount}>
+            {enterprises.length} {enterprises.length === 1 ? 'entreprise trouvée' : 'entreprises trouvées'}
+          </Text>
         </View>
-      ) : (
-        <>
-          <View style={styles.resultsHeader}>
-            <Text style={styles.resultsCount}>
-              {filteredCompanies.length} {filteredCompanies.length === 1 ? 'entreprise trouvée' : 'entreprises trouvées'}
-            </Text>
-          </View>
-
-          <FlatList
-            data={filteredCompanies}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <Card 
-                company={item}
-                onPress={() => navigation.navigate('Details', { id: item.id, name: item.name })}
-              />
-            )}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Aucune entreprise ne correspond à votre recherche</Text>
-              </View>
-            }
-          />
-        </>
       )}
+      
+      {renderContent()}
     </SafeAreaView>
   );
 };
@@ -212,7 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIZES.medium,
     height: 50,
   },
-  searchIcon: {
+  inputSearchIcon: {
     marginRight: SIZES.small,
   },
   searchInput: {
@@ -244,11 +272,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: SIZES.small,
   },
-  categoriesContainer: {
+  domainsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  categoryItem: {
+  domainItem: {
     paddingHorizontal: SIZES.medium,
     paddingVertical: SIZES.small,
     marginRight: SIZES.small,
@@ -256,14 +284,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderRadius: SIZES.borderRadius,
   },
-  selectedCategoryItem: {
+  selectedDomainItem: {
     backgroundColor: COLORS.primary,
   },
-  categoryName: {
+  domainName: {
     fontSize: SIZES.body,
     color: COLORS.text,
   },
-  selectedCategoryName: {
+  selectedDomainName: {
     color: COLORS.card,
   },
   resultsHeader: {
@@ -284,14 +312,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyContainer: {
-    padding: SIZES.large,
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.large,
   },
   emptyText: {
     fontSize: SIZES.body,
     color: COLORS.textSecondary,
     textAlign: 'center',
+  },
+  initialSearchContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.large,
+  },
+  searchIcon: {
+    marginBottom: SIZES.large,
+    opacity: 0.5,
+  },
+  searchHint: {
+    fontSize: SIZES.body,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    maxWidth: '80%',
   },
 });
 
