@@ -47,8 +47,27 @@ export const DomainName = {
     }
   }
   
-  export class Customer {
+  export class Visitor {
     constructor() {
+      this.id = null; // uuid
+    }
+  
+    search() {
+      // Implémentation de la recherche
+    }
+  
+    subscribe() {
+      // Implémentation de l'abonnement
+    }
+  
+    contactEnterprise(contact) {
+      // Implémentation pour contacter une entreprise
+    }
+  }
+
+  export class Customer extends Visitor {
+    constructor() {
+      super();
       this.id = null; // uuid
       this.email = ''; // string
       this.username = ''; // string
@@ -84,36 +103,7 @@ export const DomainName = {
     }
   }
   
-  export class Visitor {
-    constructor() {
-      this.id = null; // uuid
-    }
-  
-    search() {
-      // Implémentation de la recherche
-    }
-  
-    subscribe() {
-      // Implémentation de l'abonnement
-    }
-  
-    contactEnterprise(contact) {
-      // Implémentation pour contacter une entreprise
-    }
-  }
-  
-  export class Review {
-    constructor() {
-      this.id = null; // uuid
-      this.content = ''; // string
-    }
-    
-    deleteEnterprise() {
-      // Implémentation pour supprimer une entreprise
-    }
-  }
-  
-  export class ReviewNote {
+    export class ReviewNote {
     constructor() {
       this.id = null; // uuid
       this.note = 0; // integer
@@ -124,6 +114,20 @@ export const DomainName = {
     }
   }
   
+  
+  export class Review {
+    constructor() {
+      this.reviewNote = this.reviewNote; //Relation d'association
+      this.id = null; // uuid
+      this.content = ''; // string
+    }
+    
+    deleteEnterprise() {
+      // Implémentation pour supprimer une entreprise
+    }
+  }
+  
+
   export class Domain {
     constructor() {
       this.id = null; // uuid
