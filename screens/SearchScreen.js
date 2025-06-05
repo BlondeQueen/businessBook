@@ -1,4 +1,6 @@
 // screens/SearchScreen.js
+import { useBusinessContext } from '../contexts/BusinessContext';
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -19,6 +21,7 @@ import { COLORS, SIZES } from '../styles/theme';
 import { searchEnterprises, getDomains } from '../services/api';
 
 const SearchScreen = ({ navigation }) => {
+  const { isInFavorites, toggleFavorite } = useBusinessContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [enterprises, setEnterprises] = useState([]);
   const [businessDomains, setBusinessDomains] = useState([]);
@@ -163,6 +166,8 @@ const SearchScreen = ({ navigation }) => {
           <EnterpriseCard 
             enterprise={item}
             onPress={() => navigation.navigate('Details', { id: item.id, name: item.longName })}
+            onFavoritePress={() => toggleFavorite(item.id)}
+            isFavorite={isInFavorites(item.id)}
           />
         )}
         contentContainerStyle={styles.listContent}

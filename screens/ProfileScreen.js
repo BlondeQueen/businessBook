@@ -80,19 +80,19 @@ const ProfileScreen = ({ navigation }) => {
       onPress: () => console.log('My reviews'),
     },
     {
-      icon: 'settings-outline',
       title: 'Paramètres',
-      onPress: () => console.log('Settings'),
+      icon: 'settings-outline',
+      onPress: () => navigation.navigate('Settings'),
     },
     {
       icon: 'help-circle-outline',
       title: 'Aide & Support',
-      onPress: () => console.log('Help & Support'),
+      onPress: () => navigation.navigate('HelpSupport'),
     },
     {
-      icon: 'information-circle-outline',
       title: 'À propos',
-      onPress: () => console.log('About'),
+      icon: 'information-circle-outline',
+      onPress: () => navigation.navigate('About'),
     },
   ];
 

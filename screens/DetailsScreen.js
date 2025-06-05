@@ -1,4 +1,6 @@
 // screens/DetailsScreen.js
+import { useBusinessContext } from '../contexts/BusinessContext';
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -23,6 +25,7 @@ const DetailsScreen = ({ route, navigation }) => {
   const [enterprise, setEnterprise] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { isInFavorites, toggleFavorite } = useBusinessContext();
 
   useEffect(() => {
     const fetchEnterpriseDetails = async () => {
@@ -40,7 +43,7 @@ const DetailsScreen = ({ route, navigation }) => {
   }, [id]);
 
   const handleFavoriteToggle = () => {
-    setIsFavorite(!isFavorite);
+    toggleFavorite(id);
   };
 
   const handleCall = () => {
@@ -110,9 +113,9 @@ const DetailsScreen = ({ route, navigation }) => {
           onPress={handleFavoriteToggle}
         >
           <Ionicons 
-            name={isFavorite ? 'heart' : 'heart-outline'} 
+            name={isInFavorites(id) ? 'heart' : 'heart-outline'} 
             size={24} 
-            color={isFavorite ? COLORS.error : COLORS.card} 
+            color={isInFavorites(id) ? COLORS.error : COLORS.card} 
           />
         </TouchableOpacity>
       </View>

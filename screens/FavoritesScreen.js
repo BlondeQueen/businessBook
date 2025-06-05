@@ -1,62 +1,79 @@
-// screens/FavoritesScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Card from '../components/Card';
+import { useBusinessContext } from '../contexts/BusinessContext';
+import EnterpriseCard from '../components/EnterpriseCard';
 import { COLORS, SIZES } from '../styles/theme';
-
-// Données fictives pour simuler les favoris
-const mockFavorites = [1, 3, 5]; // IDs des entreprises favorites
-
-// Import des données mock
-import { getCompanies } from '../services/api';
+import { getEnterpriseById } from '../services/api';
 
 const FavoritesScreen = ({ navigation }) => {
+  const { favorites, toggleFavorite, isInFavorites } = useBusinessContext();
+  const [favoriteEnterprises, setFavoriteEnterprises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    const fetchFavorites = async () => {
+    const fetchFavoriteEnterprises = async () => {
       try {
-        // Simulation d'un appel API
-        const allCompanies = await getCompanies();
+        setIsLoading(true);
         
-        // Filtrer les entreprises favorites
-        const favoriteCompanies = allCompanies.filter(company => 
-          mockFavorites.includes(company.id)
+        const enterprises = await Promise.all(
+          favorites.map(async (id) => {
+            try {
+              const data = await getEnterpriseById(id);
+              return data;
+            } catch (error) {
+              console.error(`Error fetching enterprise with id ${id}:`, error);
+              return null;
+            }
+          })
         );
         
-        setFavorites(favoriteCompanies);
+        // Filtrer les entreprises nulles (en cas d'erreur)
+        setFavoriteEnterprises(enterprises.filter(enterprise => enterprise !== null));
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching favorites:', error);
+        console.error('Error fetching favorite enterprises:', error);
         setIsLoading(false);
       }
     };
 
-    fetchFavorites();
-  }, []);
-
-  const handleRemoveFavorite = (id) => {
-    // Simuler la suppression d'un favori
-    const updatedFavorites = favorites.filter(company => company.id !== id);
-    setFavorites(updatedFavorites);
-  };
+    fetchFavoriteEnterprises();
+  }, [favorites]);
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (favoriteEnterprises.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+        <View style={styles.header}>
+          <Text style={styles.title}>Mes favoris</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="heart" size={80} color={COLORS.border} style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>Aucun favori</Text>
+          <Text style={styles.emptyText}>
+            Ajoutez des entreprises à vos favoris pour les retrouver facilement ici.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -65,45 +82,23 @@ const FavoritesScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
       <View style={styles.header}>
-        <Text style={styles.title}>Mes Favoris</Text>
+        <Text style={styles.title}>Mes favoris</Text>
       </View>
       
-      {favorites.length > 0 ? (
-        <FlatList
-          data={favorites}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.cardContainer}>
-              <Card 
-                company={item}
-                onPress={() => navigation.navigate('Details', { id: item.id, name: item.name })}
-              />
-              <TouchableOpacity 
-                style={styles.removeButton}
-                onPress={() => handleRemoveFavorite(item.id)}
-              >
-                <Ionicons name="close-circle" size={24} color={COLORS.error} />
-              </TouchableOpacity>
-            </View>
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="heart-outline" size={80} color={COLORS.textSecondary} />
-          <Text style={styles.emptyTitle}>Aucun favori</Text>
-          <Text style={styles.emptyText}>
-            Les entreprises que vous ajoutez à vos favoris apparaîtront ici
-          </Text>
-          <TouchableOpacity
-            style={styles.browseButton}
-            onPress={() => navigation.navigate('Home')}
-          >
-            <Text style={styles.browseButtonText}>Explorer les entreprises</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <FlatList
+        data={favoriteEnterprises}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <EnterpriseCard
+            enterprise={item}
+            onPress={() => navigation.navigate('Details', { id: item.id, name: item.longName })}
+            onFavoritePress={() => toggleFavorite(item.id)}
+            isFavorite={isInFavorites(item.id)}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };
@@ -113,34 +108,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  loaderContainer: {
+  header: {
+    padding: SIZES.medium,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  title: {
+    fontSize: SIZES.title,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    paddingHorizontal: SIZES.large,
-    paddingVertical: SIZES.medium,
-  },
-  title: {
-    fontSize: SIZES.extraLarge,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
   listContent: {
-    paddingHorizontal: SIZES.medium,
-    paddingBottom: SIZES.large,
-  },
-  cardContainer: {
-    position: 'relative',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: 15,
+    padding: SIZES.medium,
   },
   emptyContainer: {
     flex: 1,
@@ -148,29 +132,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SIZES.large,
   },
+  emptyIcon: {
+    marginBottom: SIZES.large,
+    opacity: 0.5,
+  },
   emptyTitle: {
     fontSize: SIZES.subtitle,
     fontWeight: 'bold',
     color: COLORS.text,
-    marginTop: SIZES.large,
     marginBottom: SIZES.small,
   },
   emptyText: {
     fontSize: SIZES.body,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: SIZES.large,
-  },
-  browseButton: {
-    paddingVertical: SIZES.medium,
-    paddingHorizontal: SIZES.large,
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.borderRadius,
-  },
-  browseButtonText: {
-    color: COLORS.card,
-    fontSize: SIZES.body,
-    fontWeight: '600',
+    maxWidth: '80%',
   },
 });
 
