@@ -36,9 +36,8 @@ export const BusinessProvider = ({ children }) => {
       }
     };
 
-    if (favorites.length > 0) {
-      saveFavorites();
-    }
+    // Sauvegarder même si le tableau est vide pour synchroniser les suppressions
+    saveFavorites();
   }, [favorites]);
 
   // Ajouter une entreprise aux favoris

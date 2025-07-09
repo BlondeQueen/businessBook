@@ -62,7 +62,10 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.header}>
       <View style={styles.titleContainer}>
         <Text style={styles.greeting}>Welcomes,</Text>
-        <Text style={styles.title}>Business Book</Text>
+        <View style={styles.titleRow}>
+          <Ionicons name="business" size={32} color={COLORS.primary} style={styles.titleIcon} />
+          <Text style={styles.title}>Business Book</Text>
+        </View>
       </View>
       <TouchableOpacity 
         style={styles.searchButton} 
@@ -163,6 +166,13 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginBottom: SIZES.medium,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleIcon: {
+    marginRight: SIZES.small,
+  },
   greeting: {
     fontSize: SIZES.body,
     color: COLORS.textSecondary,
@@ -186,7 +196,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: SIZES.body,
   },
-  domainsContainer: {  // Correction ici (était categoriesContainer)
+  domainsContainer: {
     paddingHorizontal: SIZES.medium,
     marginBottom: SIZES.medium,
   },
@@ -197,24 +207,24 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.small,
     paddingHorizontal: SIZES.medium,
   },
-  domainsList: {  // Correction ici (était categoriesList)
+  domainsList: {
     paddingVertical: SIZES.small,
   },
-  domainItem: {  // Correction ici (était categoryItem)
+  domainItem: {
     paddingHorizontal: SIZES.medium,
     paddingVertical: SIZES.small,
     marginRight: SIZES.small,
     backgroundColor: COLORS.card,
     borderRadius: SIZES.borderRadius,
   },
-  selectedDomainItem: {  // Correction ici (était selectedCategoryItem)
+  selectedDomainItem: {
     backgroundColor: COLORS.primary,
   },
-  domainName: {  // Correction ici (était categoryName)
+  domainName: {
     fontSize: SIZES.body,
     color: COLORS.text,
   },
-  selectedDomainName: {  // Correction ici (était selectedCategoryName)
+  selectedDomainName: {
     color: COLORS.card,
   },
   listContent: {

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import des écrans
 import SplashScreen from '../screens/SplashScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import DetailsScreen from '../screens/DetailsScreen';
@@ -146,6 +147,12 @@ const AppNavigator = ({ userType, isLoading, handleLogin }) => {
         <Stack.Screen 
           name="Splash" 
           component={SplashScreen} 
+          options={{ headerShown: false }} 
+        />
+        
+        <Stack.Screen 
+          name="Onboarding" 
+          component={OnboardingScreen} 
           options={{ headerShown: false }} 
         />
         

@@ -9,6 +9,7 @@ import {
   Dimensions,
   StatusBar
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, SIZES } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -90,9 +91,19 @@ const SplashScreen = ({ navigation }) => {
       ]),
     ]).start();
 
-    // Naviguer vers l'écran d'accueil après un délai
-    const timer = setTimeout(() => {
-      navigation.replace('Main');
+    // Naviguer vers l'écran approprié après un délai
+    const timer = setTimeout(async () => {
+      try {
+        // TEMPORAIRE: Forcer l'affichage de l'onboarding à chaque lancement
+        await AsyncStorage.removeItem('hasSeenOnboarding');
+        
+        // Toujours afficher l'onboarding pour les tests
+        navigation.replace('Onboarding');
+      } catch (error) {
+        console.error('Error navigating to onboarding:', error);
+        // En cas d'erreur, aller directement à l'écran principal
+        navigation.replace('Main');
+      }
     }, 3500); // Légèrement plus long pour apprécier l'animation
 
     return () => clearTimeout(timer);

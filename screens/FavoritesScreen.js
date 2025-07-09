@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBusinessContext } from '../contexts/BusinessContext';
@@ -18,11 +19,19 @@ const FavoritesScreen = ({ navigation }) => {
   const { favorites, toggleFavorite, isInFavorites } = useBusinessContext();
   const [favoriteEnterprises, setFavoriteEnterprises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchFavoriteEnterprises = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        
+        if (favorites.length === 0) {
+          setFavoriteEnterprises([]);
+          setIsLoading(false);
+          return;
+        }
         
         const enterprises = await Promise.all(
           favorites.map(async (id) => {
@@ -37,10 +46,12 @@ const FavoritesScreen = ({ navigation }) => {
         );
         
         // Filtrer les entreprises nulles (en cas d'erreur)
-        setFavoriteEnterprises(enterprises.filter(enterprise => enterprise !== null));
+        const validEnterprises = enterprises.filter(enterprise => enterprise !== null);
+        setFavoriteEnterprises(validEnterprises);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching favorite enterprises:', error);
+        setError('Une erreur est survenue lors du chargement des favoris');
         setIsLoading(false);
       }
     };
@@ -52,8 +63,28 @@ const FavoritesScreen = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+        <View style={styles.header}>
+          <Text style={styles.title}>Mes favoris</Text>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Chargement...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+        <View style={styles.header}>
+          <Text style={styles.title}>Mes favoris</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="alert-circle-outline" size={80} color={COLORS.error} style={styles.emptyIcon} />
+          <Text style={styles.errorTitle}>Erreur</Text>
+          <Text style={styles.emptyText}>{error}</Text>
         </View>
       </SafeAreaView>
     );
@@ -123,6 +154,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    fontSize: SIZES.body,
+    color: COLORS.textSecondary,
+    marginTop: SIZES.small,
+  },
   listContent: {
     padding: SIZES.medium,
   },
@@ -140,6 +176,12 @@ const styles = StyleSheet.create({
     fontSize: SIZES.subtitle,
     fontWeight: 'bold',
     color: COLORS.text,
+    marginBottom: SIZES.small,
+  },
+  errorTitle: {
+    fontSize: SIZES.subtitle,
+    fontWeight: 'bold',
+    color: COLORS.error,
     marginBottom: SIZES.small,
   },
   emptyText: {

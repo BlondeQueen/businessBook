@@ -31,7 +31,7 @@ const EnterpriseCard = ({
             <Text style={styles.title} numberOfLines={1}>{enterprise.longName}</Text>
             <TouchableOpacity 
               style={styles.favoriteButton} 
-              onPress={() => onFavoritePress && onFavoritePress(enterprise)}
+              onPress={() => onFavoritePress && onFavoritePress(enterprise.id)}
             >
               <Ionicons 
                 name={isFavorite ? "heart" : "heart-outline"} 
